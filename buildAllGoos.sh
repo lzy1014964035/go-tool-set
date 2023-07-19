@@ -16,4 +16,6 @@ env GOOS=darwin GOARCH=amd64 go build -o ./allGoosBuild/${appName}-mac
 
 # 构建 Linux 可执行文件
 echo "正在打包Linux";
-env GOOS=linux GOARCH=amd64 go build -o ./allGoosBuild/${appName}-linux
+env GOOS=linux GOARCH=amd64 go build -o ./allGoosBuild/${appName}-linux-amd64
+# aarch64 是 ARM 架构的一种变体
+env GOOS=linux GOARCH=arm64 go build -o ./allGoosBuild/${appName}-linux-arm64
