@@ -8,6 +8,7 @@ import (
 	"time"
 	"strings"
 	"io/ioutil"
+	"math"
 	"github.com/ghodss/yaml"
 )
 
@@ -222,4 +223,18 @@ func FileGetContentYml(filePath string) (Object) {
 	result := JsonDecode(string(jsonContent));
 
 	return result;
+}
+
+// 四舍五入
+func Round(num float64, decimals int) float64 {
+	scale := math.Pow(10, float64(decimals))
+	return math.Round(num*scale) / scale
+}
+
+// 系统睡眠，参数单位为秒
+func Sleep(sleepSecond float64) {
+	sleepSecond = Round(sleepSecond, 2)
+	sleepDuration := time.Duration(sleepSecond * 1000) * time.Millisecond
+	Dump(1111, sleepDuration);
+	time.Sleep(sleepDuration) // 程序休眠
 }
