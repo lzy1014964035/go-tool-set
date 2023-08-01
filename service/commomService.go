@@ -9,6 +9,7 @@ import (
 	"strings"
 	"io/ioutil"
 	"math"
+	"log"
 	"github.com/ghodss/yaml"
 )
 
@@ -235,8 +236,12 @@ func Round(num float64, decimals int) float64 {
 
 // 系统睡眠，参数单位为秒
 func Sleep(sleepSecond float64) {
-	Dump(333);
 	sleepSecond = Round(sleepSecond, 2)
 	sleepDuration := time.Duration(sleepSecond * 1000) * time.Millisecond
 	time.Sleep(sleepDuration) // 程序休眠
+}
+
+// 模拟发生了严重错误，立即终止程序
+func Fail(message ...interface{}){
+	log.Fatal(message...);
 }
