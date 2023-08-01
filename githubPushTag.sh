@@ -1,7 +1,7 @@
 #!/bin/bash
 
-git add .
-git commit -m "自动提交"
+# git add .
+# git commit -m "自动提交"
 
 # 删除标签
 git tag -d v0.0.2
