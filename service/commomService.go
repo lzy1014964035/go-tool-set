@@ -233,8 +233,8 @@ func Round(num float64, decimals int) float64 {
 
 // 系统睡眠，参数单位为秒
 func Sleep(sleepSecond float64) {
+	Dump(333);
 	sleepSecond = Round(sleepSecond, 2)
 	sleepDuration := time.Duration(sleepSecond * 1000) * time.Millisecond
-	Dump(1111, sleepDuration);
 	time.Sleep(sleepDuration) // 程序休眠
 }
