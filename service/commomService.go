@@ -12,6 +12,8 @@ import (
 	"github.com/ghodss/yaml"
 )
 
+// go mod 增加 一下代码完成 文件夹映射
+// replace github.com/lzy1014964035/go-tool-set => C:\Users\44175\Desktop\demo\go\go-tool-set
 
 type Any any
 
