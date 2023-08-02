@@ -9,9 +9,10 @@ import (
 type ResponseWriter = http.ResponseWriter
 type Request        = http.Request
 type ReuqestData    = service.ToMap
+type OtherData      = service.Any
 
 // 添加路由
-func AddUrl(url string, callableFunction func(http.ResponseWriter, *http.Request, ReuqestData)){
+func AddUrl(url string, callableFunction func(http.ResponseWriter, *http.Request, ReuqestData, OtherData), otherData OtherData){
 	http.HandleFunc(url, func(w http.ResponseWriter, r *http.Request){
 		var data ReuqestData
 		err := json.NewDecoder(r.Body).Decode(&data)
@@ -20,7 +21,7 @@ func AddUrl(url string, callableFunction func(http.ResponseWriter, *http.Request
 			return
 		}
 		// 获取 JSON 中的字段值
-		callableFunction(w, r, data);
+		callableFunction(w, r, data, otherData);
 	})
 }
 

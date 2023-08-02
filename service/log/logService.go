@@ -9,7 +9,7 @@ var logBasePath = "./logs/"
 type LogService struct {}
 
 
-func MakeLog (logFileName string, logData ... service.Object) {
+func MakeLog (logFileName string, logData ...service.Any) {
 	// 组合日志路径
 	logPath := logBasePath + service.MakeDateWithYMD() + "/" + logFileName;
 	// 检查和创建日志文件
@@ -23,7 +23,7 @@ func MakeLog (logFileName string, logData ... service.Object) {
 	defer file.Close()
 	// 写入日志
 	dateTime := service.MakeDateWithYMDHIS();
-	logData = append([]service.Object{"---------" + dateTime + "---------"}, logData...) // 追加装饰用头部
+	logData = append([]service.Any{"---------" + dateTime + "---------"}, logData...) // 追加装饰用头部
 	logData = append(logData, "-------------------------------------") // 追加装饰用尾部
 	// 轮询写入日志
 	service.ForeachArray(logData, func(k, v interface{}) {
@@ -36,7 +36,7 @@ func MakeLog (logFileName string, logData ... service.Object) {
 }
 
 // 创建错误的日志文件
-func MakeLogError(logData ... service.Object) {
+func MakeLogError(logData ...service.Any) {
 	MakeLog("error.log", logData...);
 }
 

@@ -6,7 +6,8 @@ import (
 )
 
 // 获取配置
-func Get(filePath string, configPath string) (interface{}) {
+func Get(filePath string, configPath string) service.Any {
+	service.Dump("获取配置");
 	configMap := service.FileGetContentYml(filePath);
 	configPathArray := service.Explode(".", configPath);
 	result := getPathValue(configMap, configPathArray);
@@ -14,7 +15,7 @@ func Get(filePath string, configPath string) (interface{}) {
 }
 
 // 根据路径获取值
-func getPathValue(data interface{}, pathArray []string) interface{} {
+func getPathValue(data service.Any, pathArray []string) service.Any {
 	if len(pathArray) == 0 {
 		return data
 	}

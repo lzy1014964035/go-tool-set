@@ -16,7 +16,7 @@ import (
 // go mod 增加 一下代码完成 文件夹映射
 // replace github.com/lzy1014964035/go-tool-set => C:\Users\44175\Desktop\demo\go\go-tool-set
 
-type Any any
+type Any = interface{}
 
 type Object = interface{}
 type Array = []interface{}
@@ -45,7 +45,7 @@ func Dump (data ...interface{}) {
 // 遍历数组
 // array 遍历的数组
 // callable（k 下标, v 值） 回调函数
-func ForeachArray[Any any] (array []Any, callable func(interface{}, interface{})) {
+func ForeachArray(array []Any, callable func(interface{}, interface{})) {
 	for i := 0; i < len(array); i++ {
 		// printing the days of the week
 		callable(i, array[i])
@@ -54,7 +54,7 @@ func ForeachArray[Any any] (array []Any, callable func(interface{}, interface{})
 
 
 // 数据结构转JSON
-func JsonEncode[Any any] (data Any) (string) {
+func JsonEncode(data Any) (string) {
 	jsonBytes,err := json.Marshal(data)
 	if(err != nil){
 		Dump("jsonEncode异常", err);
@@ -70,8 +70,8 @@ func JsonEncode[Any any] (data Any) (string) {
 }
 
 // json字符串转结构
-func JsonDecode(jsonString string) (Object) {
-	var data Object
+func JsonDecode(jsonString string) (ToMap) {
+	var data ToMap
 	err := json.Unmarshal([]byte(jsonString), &data)
 	if err != nil {
 		Dump("jsonDecode异常", err)
