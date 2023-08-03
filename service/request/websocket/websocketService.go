@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/websocket"
 	"github.com/lzy1014964035/go-tool-set/service"
@@ -58,7 +59,7 @@ func makeConnect(w http.ResponseWriter, r *http.Request) {
 
 // 将连接添加进连接池
 func addConnectInPool(connect *websocket.Conn) ConnectData {
-	var connectId string = string(service.GetTimeNanoseconds());
+	var connectId string = strconv.FormatInt(service.GetTimeNanoseconds(), 36) + service.RandomString(4); // 36进制毫秒时间戳 + 4位随机字符串
 	connectPool[connectId] = ConnectData{
 		Id: connectId,
 		Connect: connect,

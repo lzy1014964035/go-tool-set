@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"math"
 	"log"
+	"math/rand"
 	"github.com/ghodss/yaml"
 )
 
@@ -244,4 +245,21 @@ func Sleep(sleepSecond float64) {
 // 模拟发生了严重错误，立即终止程序
 func Fail(message ...interface{}){
 	log.Fatal(message...);
+}
+
+// 生成指定范围内的随机整数
+func RandomInt(min, max int) int {
+	rand.Seed(time.Now().UnixNano())
+	return min + rand.Intn(max-min+1)
+}
+
+// 生成指定长度的随机字符串
+func RandomString(length int) string {
+	rand.Seed(time.Now().UnixNano())
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[rand.Intn(len(charset))]
+	}
+	return string(b)
 }
