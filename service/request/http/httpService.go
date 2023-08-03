@@ -12,8 +12,8 @@ type ReuqestData    = service.ToMap
 type OtherData      = service.Any
 
 // 添加路由
-func AddUrl(url string, callableFunction func(http.ResponseWriter, *http.Request, ReuqestData, OtherData), otherData OtherData){
-	http.HandleFunc(url, func(w http.ResponseWriter, r *http.Request){
+func SetPath(path string, callableFunction func(http.ResponseWriter, *http.Request, ReuqestData, OtherData), otherData OtherData){
+	http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request){
 		var data ReuqestData
 		err := json.NewDecoder(r.Body).Decode(&data)
 		if err != nil {

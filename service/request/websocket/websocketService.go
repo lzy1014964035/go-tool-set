@@ -8,13 +8,22 @@ import (
 	"github.com/lzy1014964035/go-tool-set/service/log"
 )
 
+type ConnectData struct {
+	Id  string // 连接ID
+	Connect    *websocket.Conn // 连接对象
+	LastReuqestTime int64  // 最后的请求时间 时间戳
+}
+
 type Connect = websocket.Conn
+type RequestData = service.Any
+
+var connectPool = make(map[string]ConnectData);
 
 // 路径组
-var pathMap = make(map[string]func(*websocket.Conn, service.Any, service.Any))
+var pathMap = make(map[string]func(ConnectData, service.Any))
 
 // 设置路径
-func SetPath(dealPath string, callable func(*websocket.Conn, service.Any, service.Any)){
+func SetPath(dealPath string, callable func(ConnectData, service.Any)){
 	service.Dump(dealPath, callable);
 	pathMap[dealPath] = callable
 }
@@ -41,16 +50,34 @@ func makeConnect(w http.ResponseWriter, r *http.Request) {
 		log.MakeLogError("WebSocket 升级失败:", err);
 		return
 	}
-
+	// 加入连接池
+	connectData := addConnectInPool(connect);
 	// 处理请求
-	dealRequest(connect, w, r);
+	dealRequest(connectData, w, r);
+}
+
+// 将连接添加进连接池
+func addConnectInPool(connect *websocket.Conn) ConnectData {
+	var connectId string = string(service.GetTimeNanoseconds());
+	connectPool[connectId] = ConnectData{
+		Id: connectId,
+		Connect: connect,
+		LastReuqestTime: service.GetTimeSeconds(),
+	};
+	return connectPool[connectId]
+}
+
+// 删除池中的连接
+func deleteConnectFromPool(connectId string){
+	delete(connectPool, connectId)
 }
 
 // 处理请求
-func dealRequest(connect *websocket.Conn, w http.ResponseWriter, r *http.Request){
+func dealRequest(connectData ConnectData, w http.ResponseWriter, r *http.Request){
 	for {
 		// 读取客户端发送的消息
-		_, message, err := connect.ReadMessage()
+		_, message, err := connectData.Connect.ReadMessage()
+		connectData.LastReuqestTime = service.GetTimeSeconds()
 		if err != nil {
 			log.MakeLogError("读取消息失败:", err, message)
 			continue;
@@ -58,58 +85,58 @@ func dealRequest(connect *websocket.Conn, w http.ResponseWriter, r *http.Request
 		messageString := string(message); // 转为字符串
 		messageJsonData := service.JsonDecode(messageString); // 转为JSON
 		if(messageJsonData == nil){
-			dealRequestString(connect, w, r, messageString)
+			dealRequestString(connectData, w, r, messageString)
 		}else{
-			dealRequestJson(connect, w, r, messageJsonData)
+			dealRequestJson(connectData, w, r, messageJsonData)
 		}
 	}
 }
 
 // 处理请求字符串
-func dealRequestString(connect *websocket.Conn, w http.ResponseWriter, r *http.Request, messageString string){
+func dealRequestString(connectData ConnectData, w http.ResponseWriter, r *http.Request, messageString string){
 	service.Dump("接收string类型消息", messageString)
-	SendToCli(connect, "不处理字符串类型数据，请传入json字符串", "501", "/showMessage", service.ToMap{"requestData": messageString});
+	SendToCli(connectData, "不处理字符串类型数据，请传入json字符串", "501", "/showMessage", service.ToMap{"requestData": messageString});
 }
 
 // 处理请求JSON
-func dealRequestJson(connect *websocket.Conn, w http.ResponseWriter, r *http.Request, messageJsonData service.ToMap){
+func dealRequestJson(connectData ConnectData, w http.ResponseWriter, r *http.Request, messageJsonData service.ToMap){
 	dealPath := messageJsonData["deal_path"].(string);
-	data := messageJsonData["data"].(service.Any);
+	// data := messageJsonData["data"].(service.Any);
 	// 如果没有传路径
 	if(dealPath == ""){
-		SendFailToCli(connect, "缺少处理路径 deal_path", "504", nil)
+		SendFailToCli(connectData, "缺少处理路径 deal_path", "504", nil)
 		return;
 	}
 	// 如果回调不存在
 	if(pathMap[dealPath] == nil){
-		SendFailToCli(connect, "路径" + dealPath + "在服务端并不存在", "503", nil)
+		SendFailToCli(connectData, "路径" + dealPath + "在服务端并不存在", "503", nil)
 		return;
 	}
 	// 取闭包
 	pathFunction := pathMap[dealPath]
-	pathFunction(connect, data, messageJsonData);
+	pathFunction(connectData, messageJsonData);
 }
 
 // 发送信息到
-func SendToCli(connect *websocket.Conn, dealPath string, message string, code string, data service.Any) {
+func SendToCli(connectData ConnectData, dealPath string, message string, code string, data service.Any) {
 	reponseData := service.ToMap{
 		"code": code,
 		"deal_path": dealPath,
 		"message": message,
 		"data": data,
 	};
-	err := connect.WriteJSON(reponseData);
+	err := connectData.Connect.WriteJSON(reponseData);
 	if err != nil {
 		log.MakeLogError("推送到websocket cli失败:", service.ToMap{"reponseData": reponseData, "err": err})
 	}
 }
 
 // 发送失败消息
-func SendFailToCli(connect *websocket.Conn, message string, code string, data service.Any) {
-	SendToCli(connect, "/showMessage", message, code, data);
+func SendFailToCli(connectData ConnectData, message string, code string, data service.Any) {
+	SendToCli(connectData, "/showMessage", message, code, data);
 }
 
 // 发送成功消息
-func SendSuccessToCli(connect *websocket.Conn, dealPath string, message string, code string, data service.Any){
-	SendToCli(connect, dealPath, message, code, data);
+func SendSuccessToCli(connectData ConnectData, dealPath string, message string, data service.Any){
+	SendToCli(connectData, dealPath, message, "200", data);
 }
