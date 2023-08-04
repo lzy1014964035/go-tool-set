@@ -13,12 +13,16 @@ type ConnectData struct {
 	Id  string // 连接ID
 	Connect    *websocket.Conn // 连接对象
 	LastReuqestTime int64  // 最后的请求时间 时间戳
+	OtherBindParam service.ToMap
 }
 
 type Connect = websocket.Conn
 type RequestData = service.Any
 
+// 连接池
 var connectPool = make(map[string]ConnectData);
+// 连接时执行的回调
+var connectCallable func(ConnectData);
 
 // 路径组
 var pathMap = make(map[string]func(ConnectData, service.Any))
@@ -53,8 +57,17 @@ func makeConnect(w http.ResponseWriter, r *http.Request) {
 	}
 	// 加入连接池
 	connectData := addConnectInPool(connect);
+	// 执行回调
+	if(connectCallable != nil){
+		connectCallable(connectData);
+	}
 	// 处理请求
 	dealRequest(connectData, w, r);
+}
+
+// 设置连接成功的回调
+func SetConnectCallable(callableFunction func(ConnectData)){
+	connectCallable = callableFunction
 }
 
 // 将连接添加进连接池
@@ -64,6 +77,7 @@ func addConnectInPool(connect *websocket.Conn) ConnectData {
 		Id: connectId,
 		Connect: connect,
 		LastReuqestTime: service.GetTimeSeconds(),
+		OtherBindParam: make(service.ToMap),
 	};
 	return connectPool[connectId]
 }

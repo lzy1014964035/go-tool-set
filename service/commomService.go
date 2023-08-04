@@ -11,6 +11,8 @@ import (
 	"math"
 	"log"
 	"math/rand"
+	"net/http"
+	"bytes"
 	"github.com/ghodss/yaml"
 )
 
@@ -262,4 +264,52 @@ func RandomString(length int) string {
 		b[i] = charset[rand.Intn(len(charset))]
 	}
 	return string(b)
+}
+
+// post请求
+func PostCurl(url string, header map[string]string, param ToMap) Any {
+
+	var requestParam []byte
+	// 创建请求
+	if(param == nil){
+		requestParam = []byte("{}")
+	}else{
+		requestParam = []byte(JsonEncode(param))
+	}
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(requestParam))
+	if err != nil {
+		fmt.Println("创建请求失败:", err)
+		return nil
+	}
+	// 设置请求头，根据需要设置
+	req.Header.Set("Content-Type", "application/json")
+	for k, v := range header {
+		req.Header.Set(k, v)
+	}
+
+	// 发送请求
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("发送请求失败:", err)
+		return nil
+	}
+	defer resp.Body.Close()
+
+	// 处理响应
+	if resp.StatusCode == http.StatusOK {
+		// 请求成功，读取响应数据
+		var responseBytes []byte
+		_, err := resp.Body.Read(responseBytes)
+		if err != nil {
+			fmt.Println("读取响应失败:", err)
+			return nil
+		}
+		stringData := string(responseBytes);
+		jsonData := JsonDecode(stringData);
+		return jsonData;
+	} else {
+		fmt.Println("请求失败，状态码:", resp.StatusCode)
+		return nil;
+	}
 }
