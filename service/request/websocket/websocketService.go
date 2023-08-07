@@ -19,13 +19,24 @@ type ConnectData struct {
 type Connect = websocket.Conn
 type RequestData = service.Any
 
+const (
+	ReponseCodeSuccess = "200"
+	ReponseCodeFailWithDealError = "501" // 处理错误
+	ReponseCodeFailWithPathError = "502" // 不存在访问路径或范文路径错误
+
+	PathWithShowMessage = "/showMessage"
+	PathWithShowError = "/showError"
+	PathWithShowSuccess = "/showSuccess"
+)
+
 // 连接池
 var connectPool = make(map[string]ConnectData);
 // 连接时执行的回调
 var connectCallable func(ConnectData);
-
 // 路径组
 var pathMap = make(map[string]func(ConnectData, service.Any))
+
+
 
 // 设置路径
 func SetPath(dealPath string, callable func(ConnectData, service.Any)){
@@ -110,7 +121,7 @@ func dealRequest(connectData ConnectData, w http.ResponseWriter, r *http.Request
 // 处理请求字符串
 func dealRequestString(connectData ConnectData, w http.ResponseWriter, r *http.Request, messageString string){
 	service.Dump("接收string类型消息", messageString)
-	SendToCli(connectData, "不处理字符串类型数据，请传入json字符串", "501", "/showMessage", service.ToMap{"requestData": messageString});
+	SendToCli(connectData, "不处理字符串类型数据，请传入json字符串", ReponseCodeFailWithDealError, "/showMessage", service.ToMap{"requestData": messageString});
 }
 
 // 处理请求JSON
@@ -119,12 +130,12 @@ func dealRequestJson(connectData ConnectData, w http.ResponseWriter, r *http.Req
 	// data := messageJsonData["data"].(service.Any);
 	// 如果没有传路径
 	if(dealPath == ""){
-		SendFailToCli(connectData, "缺少处理路径 deal_path", "504", nil)
+		SendFailToCli(connectData, "", "缺少处理路径 deal_path", ReponseCodeFailWithPathError, nil)
 		return;
 	}
 	// 如果回调不存在
 	if(pathMap[dealPath] == nil){
-		SendFailToCli(connectData, "路径" + dealPath + "在服务端并不存在", "503", nil)
+		SendFailToCli(connectData, "", "路径" + dealPath + "在服务端并不存在", ReponseCodeFailWithPathError, nil)
 		return;
 	}
 	// 取闭包
@@ -147,11 +158,14 @@ func SendToCli(connectData ConnectData, dealPath string, message string, code st
 }
 
 // 发送失败消息
-func SendFailToCli(connectData ConnectData, message string, code string, data service.Any) {
-	SendToCli(connectData, "/showMessage", message, code, data);
+func SendFailToCli(connectData ConnectData, dealPath string, message string, code string, data service.Any) {
+	if(dealPath == ""){
+		dealPath = PathWithShowError;
+	}
+	SendToCli(connectData, dealPath, message, code, data);
 }
 
 // 发送成功消息
 func SendSuccessToCli(connectData ConnectData, dealPath string, message string, data service.Any){
-	SendToCli(connectData, dealPath, message, "200", data);
+	SendToCli(connectData, dealPath, message, ReponseCodeSuccess, data);
 }
