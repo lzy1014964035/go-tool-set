@@ -24,9 +24,7 @@ const (
 	ReponseCodeFailWithDealError = "501" // 处理错误
 	ReponseCodeFailWithPathError = "502" // 不存在访问路径或范文路径错误
 
-	PathWithShowMessage = "/showMessage"
 	PathWithShowError = "/showError"
-	PathWithShowSuccess = "/showSuccess"
 )
 
 // 连接池

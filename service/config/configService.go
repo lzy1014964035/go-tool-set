@@ -9,6 +9,9 @@ import (
 func Get(filePath string, configPath string) service.Any {
 	service.Dump("获取配置");
 	configMap := service.FileGetContentYml(filePath);
+	if(configPath == ""){
+		return configMap.(service.Any);
+	}
 	configPathArray := service.Explode(".", configPath);
 	result := getPathValue(configMap, configPathArray);
 	return result;

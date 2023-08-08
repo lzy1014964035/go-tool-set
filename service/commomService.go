@@ -278,7 +278,7 @@ func PostCurl(url string, header map[string]string, param ToMap) Any {
 	}
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(requestParam))
 	if err != nil {
-		fmt.Println("创建请求失败:", err)
+		fmt.Println("postcurl创建请求失败:", err)
 		return nil
 	}
 	// 设置请求头，根据需要设置
@@ -291,7 +291,7 @@ func PostCurl(url string, header map[string]string, param ToMap) Any {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("发送请求失败:", err)
+		fmt.Println("postcurl发送请求失败:", err)
 		return nil
 	}
 	defer resp.Body.Close()
@@ -299,17 +299,16 @@ func PostCurl(url string, header map[string]string, param ToMap) Any {
 	// 处理响应
 	if resp.StatusCode == http.StatusOK {
 		// 请求成功，读取响应数据
-		var responseBytes []byte
-		_, err := resp.Body.Read(responseBytes)
+		body,err := ioutil.ReadAll(resp.Body);
 		if err != nil {
-			fmt.Println("读取响应失败:", err)
+			fmt.Println("postcurl解析内容失败:", err)
 			return nil
 		}
-		stringData := string(responseBytes);
-		jsonData := JsonDecode(stringData);
+		stringBody := string(body);
+		jsonData := JsonDecode(stringBody);
 		return jsonData;
 	} else {
-		fmt.Println("请求失败，状态码:", resp.StatusCode)
+		fmt.Println("postcurl请求失败，状态码:", resp.StatusCode)
 		return nil;
 	}
 }
