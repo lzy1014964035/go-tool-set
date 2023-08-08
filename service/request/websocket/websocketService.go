@@ -28,16 +28,16 @@ const (
 )
 
 // 连接池
-var connectPool = make(map[string]ConnectData);
+var connectPool = make(map[string]*ConnectData);
 // 连接时执行的回调
-var connectCallable func(ConnectData);
+var connectCallable func(*ConnectData);
 // 路径组
-var pathMap = make(map[string]func(ConnectData, service.Any))
+var pathMap = make(map[string]func(*ConnectData, service.Any))
 
 
 
 // 设置路径
-func SetPath(dealPath string, callable func(ConnectData, service.Any)){
+func SetPath(dealPath string, callable func(*ConnectData, service.Any)){
 	service.Dump(dealPath, callable);
 	pathMap[dealPath] = callable
 }
@@ -75,14 +75,14 @@ func makeConnect(w http.ResponseWriter, r *http.Request) {
 }
 
 // 设置连接成功的回调
-func SetConnectCallable(callableFunction func(ConnectData)){
+func SetConnectCallable(callableFunction func(*ConnectData)){
 	connectCallable = callableFunction
 }
 
 // 将连接添加进连接池
-func addConnectInPool(connect *websocket.Conn) ConnectData {
+func addConnectInPool(connect *websocket.Conn) *ConnectData {
 	var connectId string = strconv.FormatInt(service.GetTimeNanoseconds(), 36) + service.RandomString(4); // 36进制毫秒时间戳 + 4位随机字符串
-	connectPool[connectId] = ConnectData{
+	connectPool[connectId] = &ConnectData{
 		Id: connectId,
 		Connect: connect,
 		LastReuqestTime: service.GetTimeSeconds(),
@@ -97,7 +97,7 @@ func deleteConnectFromPool(connectId string){
 }
 
 // 处理请求
-func dealRequest(connectData ConnectData, w http.ResponseWriter, r *http.Request){
+func dealRequest(connectData *ConnectData, w http.ResponseWriter, r *http.Request){
 	for {
 		// 读取客户端发送的消息
 		_, message, err := connectData.Connect.ReadMessage()
@@ -117,13 +117,13 @@ func dealRequest(connectData ConnectData, w http.ResponseWriter, r *http.Request
 }
 
 // 处理请求字符串
-func dealRequestString(connectData ConnectData, w http.ResponseWriter, r *http.Request, messageString string){
+func dealRequestString(connectData *ConnectData, w http.ResponseWriter, r *http.Request, messageString string){
 	service.Dump("接收string类型消息", messageString)
 	SendToCli(connectData, "不处理字符串类型数据，请传入json字符串", ReponseCodeFailWithDealError, "/showMessage", service.ToMap{"requestData": messageString});
 }
 
 // 处理请求JSON
-func dealRequestJson(connectData ConnectData, w http.ResponseWriter, r *http.Request, messageJsonData service.ToMap){
+func dealRequestJson(connectData *ConnectData, w http.ResponseWriter, r *http.Request, messageJsonData service.ToMap){
 	dealPath := messageJsonData["deal_path"].(string);
 	// data := messageJsonData["data"].(service.Any);
 	// 如果没有传路径
@@ -142,7 +142,7 @@ func dealRequestJson(connectData ConnectData, w http.ResponseWriter, r *http.Req
 }
 
 // 发送信息到
-func SendToCli(connectData ConnectData, dealPath string, message string, code string, data service.Any) {
+func SendToCli(connectData *ConnectData, dealPath string, message string, code string, data service.Any) {
 	reponseData := service.ToMap{
 		"code": code,
 		"deal_path": dealPath,
@@ -156,7 +156,7 @@ func SendToCli(connectData ConnectData, dealPath string, message string, code st
 }
 
 // 发送失败消息
-func SendFailToCli(connectData ConnectData, dealPath string, message string, code string, data service.Any) {
+func SendFailToCli(connectData *ConnectData, dealPath string, message string, code string, data service.Any) {
 	if(dealPath == ""){
 		dealPath = PathWithShowError;
 	}
@@ -164,6 +164,6 @@ func SendFailToCli(connectData ConnectData, dealPath string, message string, cod
 }
 
 // 发送成功消息
-func SendSuccessToCli(connectData ConnectData, dealPath string, message string, data service.Any){
+func SendSuccessToCli(connectData *ConnectData, dealPath string, message string, data service.Any){
 	SendToCli(connectData, dealPath, message, ReponseCodeSuccess, data);
 }
