@@ -128,12 +128,12 @@ func dealRequestJson(connectData *ConnectData, w http.ResponseWriter, r *http.Re
 	// data := messageJsonData["data"].(service.Any);
 	// 如果没有传路径
 	if(dealPath == ""){
-		SendFailToCli(connectData, "", "缺少处理路径 deal_path", ReponseCodeFailWithPathError, nil)
+		SendFailToCli(connectData, "", ReponseCodeFailWithPathError, "缺少处理路径 deal_path", nil)
 		return;
 	}
 	// 如果回调不存在
 	if(pathMap[dealPath] == nil){
-		SendFailToCli(connectData, "", "路径" + dealPath + "在服务端并不存在", ReponseCodeFailWithPathError, nil)
+		SendFailToCli(connectData, "", ReponseCodeFailWithPathError, "路径" + dealPath + "在服务端并不存在", nil)
 		return;
 	}
 	// 取闭包
@@ -142,7 +142,7 @@ func dealRequestJson(connectData *ConnectData, w http.ResponseWriter, r *http.Re
 }
 
 // 发送信息到
-func SendToCli(connectData *ConnectData, dealPath string, message string, code string, data service.Any) {
+func SendToCli(connectData *ConnectData, dealPath string, code string, message string, data service.Any) {
 	reponseData := service.ToMap{
 		"code": code,
 		"deal_path": dealPath,
@@ -156,14 +156,17 @@ func SendToCli(connectData *ConnectData, dealPath string, message string, code s
 }
 
 // 发送失败消息
-func SendFailToCli(connectData *ConnectData, dealPath string, message string, code string, data service.Any) {
+func SendFailToCli(connectData *ConnectData, dealPath string, code string, message string, data service.Any) {
 	if(dealPath == ""){
 		dealPath = PathWithShowError;
 	}
-	SendToCli(connectData, dealPath, message, code, data);
+	if(code == ""){
+		code = ReponseCodeFailWithDealError;
+	}
+	SendToCli(connectData, dealPath, code, message, data);
 }
 
 // 发送成功消息
 func SendSuccessToCli(connectData *ConnectData, dealPath string, message string, data service.Any){
-	SendToCli(connectData, dealPath, message, ReponseCodeSuccess, data);
+	SendToCli(connectData, dealPath, ReponseCodeSuccess, message, data);
 }
